@@ -38,32 +38,13 @@ func main() {
 	for scanner.Scan() {
 		// scanner.Text() retorna a linha lida.
 		rawData := scanner.Text()
-		semicolons := strings.Index(rawData, ";")
-		location := rawData[:semicolons]
-		rawTemp := rawData[semicolons+1:]
-		// strconv.ParseFloat converte uma string para um float64.
-		temp, err := strconv.ParseFloat(rawTemp, 64)
 
-		if err != nil {
-			panic(err)
-		}
+		// extractData retorna a localização e a temperatura.
+		location, temp := extractData(rawData)
 
-		measurement, ok := data[location]
+		// createOrUpdateMeasurement cria ou atualiza a medição.
+		measurement := createOrUpdateMeasurement(data, location, temp)
 
-		if !ok {
-			measurement = Measurement{
-				Min:   temp,
-				Max:   temp,
-				Sum:   temp,
-				Count: 1,
-			}
-
-		} else {
-			measurement.Min = min(measurement.Min, temp)
-			measurement.Max = max(measurement.Max, temp)
-			measurement.Sum += temp
-			measurement.Count++
-		}
 		data[location] = measurement
 
 	}
@@ -88,4 +69,39 @@ func main() {
 	fmt.Printf("}\n")
 
 	fmt.Println("Tempo de execução: ", time.Since(start))
+}
+
+func extractData(rawData string) (string, float64) {
+	semicolons := strings.Index(rawData, ";")
+	location := rawData[:semicolons]
+	rawTemp := rawData[semicolons+1:]
+
+	// strconv.ParseFloat converte uma string para um float64.
+	temp, err := strconv.ParseFloat(rawTemp, 64)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return location, temp
+}
+
+func createOrUpdateMeasurement(data map[string]Measurement, location string, temp float64) Measurement {
+	measurement, ok := data[location]
+
+	if !ok {
+		measurement = Measurement{
+			Min:   temp,
+			Max:   temp,
+			Sum:   temp,
+			Count: 1,
+		}
+
+	} else {
+		measurement.Min = min(measurement.Min, temp)
+		measurement.Max = max(measurement.Max, temp)
+		measurement.Sum += temp
+		measurement.Count++
+	}
+	return measurement
 }
